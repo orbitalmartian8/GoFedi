@@ -1,20 +1,42 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 )
 
+var (
+	tmpl *template.Template
+)
+
+func init() {
+	tmpl = template.Must(template.ParseFiles("login.html"))
+}
+
 func main() {
-	http.HandleFunc("/api/hello", helloHandler)
+	http.HandleFunc("/", loginHandler)
+	http.HandleFunc("/dashboard", dashboardHandler)
 	port := ":8080"
 	fmt.Printf("Server listening on port %s...\n", port)
 	http.ListenAndServe(port, nil)
 }
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	response := map[string]string{"message": "Hello from Go backend!"}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		// In a real-world scenario, you'd validate credentials and set a proper session/token.
+		if username == "admin" && password == "password" {
+			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+			return
+		}
+	}
+
+	tmpl.Execute(w, nil)
+}
+
+func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Welcome to the dashboard!")
 }
